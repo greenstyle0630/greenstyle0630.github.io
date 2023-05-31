@@ -1,11 +1,7 @@
-baseURL = 'greenstyle.gitlab.io'
+baseURL = 'http://greenstyle.gitlab.io'
 languageCode = 'en-us'
-title = '王一的朋友去圈'
+title = '王一的朋友圈'
 theme = "LoveIt"
-
-
-
-
 
 [module]
   [module.hugoVersion]
