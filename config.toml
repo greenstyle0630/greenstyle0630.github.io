@@ -25,10 +25,10 @@ theme = "LoveIt"
   dateFormat = "2006-01-02"
   # website title for Open Graph and Twitter Cards
   # 网站标题, 用于 Open Graph 和 Twitter Cards
-  title = "My cool site"
+  title = "王一的朋友圈"
   # website description for RSS, SEO, Open Graph and Twitter Cards
   # 网站描述, 用于 RSS, SEO, Open Graph 和 Twitter Cards
-  description = "This is my cool site"
+  description = "王一的朋友圈"
   # website images for Open Graph and Twitter Cards
   # 网站图片, 用于 Open Graph 和 Twitter Cards
   images = []
@@ -50,7 +50,7 @@ theme = "LoveIt"
       logo = ""
       # title name
       # 标题名称
-      name = "My cool site"
+      name = "王一的朋友圈"
       # you can add extra information before the name (HTML format is supported), such as icons
       # 你可以在名称 (允许 HTML 格式) 之前添加其他信息, 例如图标
       pre = ""
@@ -186,7 +186,7 @@ theme = "LoveIt"
       title = ""
       # subtitle shown in home page (HTML format is supported)
       # 主页显示的网站副标题 (允许 HTML 格式)
-      subtitle = "This is my cool site"
+      subtitle = "王一的朋友圈"
       # whether to use typeit animation for subtitle
       # 是否为副标题显示打字机动画
       typeit = true
