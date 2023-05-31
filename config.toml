@@ -3,6 +3,13 @@ languageCode = 'en-us'
 title = '王一的朋友圈'
 theme = "LoveIt"
 
+# Author config
+# 作者配置
+[author]
+  name = "王一"
+  email = ""
+  link = ""
+
 [module]
   [module.hugoVersion]
     extended = true
@@ -70,7 +77,7 @@ theme = "LoveIt"
     custom = ""
     # whether to show Hugo and theme info
     # 是否显示 Hugo 和主题信息
-    hugo = true
+    hugo = false
     # whether to show copyright info
     # 是否显示版权信息
     copyright = true
