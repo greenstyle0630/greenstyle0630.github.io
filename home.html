@@ -35,15 +35,15 @@
             background-color: var(--bg-color);
         }
 
-        /* === 3. 吊灯 === */
+        /* === 3. 吊灯 (严格复刻，top保持-20px) === */
         .theme-switch {
             position: absolute; 
-            top: -20px; 
-            right: 40px;
+            top: -20px; /* 保持原样 */
+            right: 40px; 
             width: 60px; height: 120px;
-            cursor: pointer; z-index: 2000;
+            cursor: pointer; z-index: 3000; 
             transform-origin: top center;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease; 
             -webkit-tap-highlight-color: transparent;
         }
         .theme-switch:hover { transform: rotate(5deg); }
@@ -58,7 +58,7 @@
             animation: bulbFlash 0.6s ease-out forwards;
         }
 
-        /* === 4. 顶部导航按钮 (桌面端默认) === */
+        /* === 4. 导航按钮 (严格复刻桌面端位置) === */
         .top-nav-buttons {
             position: absolute; 
             top: 20px; 
@@ -68,14 +68,13 @@
         .nav-btn {
             text-decoration: none; font-family: 'Courier New', Courier, monospace; 
             font-weight: bold; font-size: 0.85rem; padding: 8px 24px; 
-            border: 2px solid; background-color: transparent; 
-            cursor: pointer; transition: all 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
-            border-radius: 8px; letter-spacing: 1px; 
+            border: 2px solid; background-color: transparent; border-radius: 8px; 
+            cursor: pointer; transition: all 0.1s; letter-spacing: 1px; 
         }
         .nav-btn.btn-red { color: var(--btn-red); border-color: var(--btn-red); box-shadow: 4px 4px 0px rgba(255, 107, 107, 0.3); }
         .nav-btn.btn-green { color: var(--btn-green); border-color: var(--btn-green); box-shadow: 4px 4px 0px rgba(81, 207, 102, 0.3); }
-        .nav-btn:hover { transform: translateY(-2px); box-shadow: 5px 5px 0px rgba(255, 255, 255, 0.2); }
-        .nav-btn:active { transform: translateY(2px); box-shadow: 0px 0px 0px transparent; }
+        .nav-btn:hover { transform: translateY(-2px); }
+        .nav-btn:active { transform: translateY(2px); box-shadow: none; }
 
         /* === 5. 垂直卡片舞台 === */
         .card-stage {
@@ -120,40 +119,26 @@
             z-index: 2002;
             pointer-events: none; 
         }
-
-        /* === 占位符 === */
         .header-placeholder { position: absolute; top: 0; width: 100%; height: 80px; pointer-events: none; }
 
         /* =========================================
-           === CSS 媒体查询 (适配) ===
+           === iPad/移动端 适配 (Max-Width 900px) ===
+           这里只负责“当屏幕变窄时，按钮和灯怎么变”
            ========================================= */
-        
-        /* 1. 平板 (600px - 1024px)：只调整文字大小，【不再调整按钮位置】 */
-        /* 这样 iPad 横屏 (>900px) 就会自动保持桌面端样式 (right: 150px)，与 About 页一致 */
-        @media (min-width: 600px) and (max-width: 1024px) {
-            .card h2 { font-size: 1.4rem; }
-        }
-
-        /* 2. 新增规则：900px 以下统一调整按钮 (完全同步 About 页逻辑) */
-        /* 这样 iPad 竖屏 (<900px) 就会自动切换到移动端样式 (right: 85px)，与 About 页一致 */
         @media (max-width: 900px) {
-            .top-nav-buttons { 
-                top: 20px; 
-                right: 85px; 
-                width: auto; margin: 0; padding: 0;
-                gap: 15px; 
+            .theme-switch { right: 10px; } /* 移动端灯泡靠右一点 */
+
+            /* 复刻 About 页面的移动端按钮逻辑 */
+            .top-nav-buttons {
+                position: absolute; top: 20px; right: 85px; 
+                width: auto; margin: 0; padding: 0; gap: 15px;
                 justify-content: flex-end; 
             }
-            .nav-btn { 
-                padding: 6px 15px; 
-                font-size: 0.75rem; 
-                box-shadow: 2px 2px 0px rgba(0,0,0,0.2); 
-            }
+            .nav-btn { padding: 6px 15px; font-size: 0.75rem; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
         }
 
-        /* 3. 手机 (600px 以下)：继续调整其他布局，但按钮样式上面已经处理了 */
+        /* 手机端内容微调 */
         @media (max-width: 600px) {
-            .theme-switch { right: 10px; } 
             .card { padding: 20px; }
             .card h2 { font-size: 1.3rem; margin-bottom: 10px; }
             .meta-info { margin-bottom: 15px; font-size: 0.75rem; }
@@ -164,11 +149,6 @@
 </head>
 <body>
 
-    <div class="top-nav-buttons">
-       <a href="#" class="nav-btn btn-red">所有文章</a>
-       <a href="about.html" class="nav-btn btn-green">关于我</a>
-    </div> 
-
     <div class="theme-switch" id="themeSwitch">
         <svg viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <line x1="30" y1="0" x2="30" y2="40" stroke="#666" stroke-width="2" stroke-linecap="round"/>
@@ -176,6 +156,11 @@
             <path d="M30 40 L50 70 L10 70 Z" fill="#ddd" stroke="#666" stroke-width="2" stroke-linejoin="round"/>
         </svg>
     </div>
+
+    <div class="top-nav-buttons">
+       <a href="#" class="nav-btn btn-red">所有文章</a>
+       <a href="about.html" class="nav-btn btn-green">关于我</a>
+    </div> 
 
     <div class="header-placeholder"></div>
     <div class="card-stage" id="stage"></div>
@@ -325,4 +310,4 @@
         init();
     </script>
 </body>
-</html>·
+</html>
