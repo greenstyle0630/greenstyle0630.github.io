@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Articles</title>
+    <style>
+        /* === 1. 全局设置 === */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: background-color 0.5s ease;
+            -webkit-user-select: none; user-select: none;
+        }
+
+        /* === 2. 统一配色 === */
+        :root {
+            --bg-color: #000;
+            --card-bg: #1a1a1a;
+            --card-border-blue: #4dabf7; --card-border-pink: #ff8787; --card-border-yellow: #ffd43b; 
+            --text-primary: #eee; --text-secondary: #888;
+            --btn-red: #ff6b6b; --btn-green: #51cf66; --btn-border: #eee;
+        }
+
+        body.light-mode {
+            --bg-color: #f9f9f9;
+            --card-bg: #fff;
+            --card-border-blue: #1c7ed6; --card-border-pink: #e03131; --card-border-yellow: #f59f00;
+            --text-primary: #333; --text-secondary: #666;
+            --btn-red: #e03131; --btn-green: #2f9e44; --btn-border: #333;
+            background-color: var(--bg-color);
+        }
+
+        /* === 3. 吊灯 === */
+        .theme-switch {
+            position: absolute; 
+            top: -20px; 
+            right: 40px;
+            width: 60px; height: 120px;
+            cursor: pointer; z-index: 2000;
+            transform-origin: top center;
+            transition: transform 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .theme-switch:hover { transform: rotate(5deg); }
+        .bulb { fill: #FFD700; transition: fill 0.3s, filter 0.3s; }
+
+        @keyframes bulbFlash {
+            0% { filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)); fill: #FFD700; }
+            50% { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 1)); fill: #FFF; } 
+            100% { filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)); fill: #FFD700; }
+        }
+        .bulb.flashing {
+            animation: bulbFlash 0.6s ease-out forwards;
+        }
+
+        /* === 4. 顶部导航按钮 === */
+        .top-nav-buttons {
+            position: absolute; 
+            top: 20px; 
+            right: 150px; 
+            display: flex; gap: 40px; z-index: 2001; align-items: center;
+        }
+        .nav-btn {
+            text-decoration: none; font-family: 'Courier New', Courier, monospace; 
+            font-weight: bold; font-size: 0.85rem; padding: 8px 24px; 
+            border: 2px solid; background-color: transparent; 
+            cursor: pointer; transition: all 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border-radius: 8px; letter-spacing: 1px; 
+        }
+        .nav-btn.btn-red { color: var(--btn-red); border-color: var(--btn-red); box-shadow: 4px 4px 0px rgba(255, 107, 107, 0.3); }
+        .nav-btn.btn-green { color: var(--btn-green); border-color: var(--btn-green); box-shadow: 4px 4px 0px rgba(81, 207, 102, 0.3); }
+        .nav-btn:hover { transform: translateY(-2px); box-shadow: 5px 5px 0px rgba(255, 255, 255, 0.2); }
+        .nav-btn:active { transform: translateY(2px); box-shadow: 0px 0px 0px transparent; }
+
+        /* === 5. 垂直卡片舞台 === */
+        .card-stage {
+            position: relative; width: 100%; height: 100%;
+            perspective: 1000px;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden;
+            padding-top: 20px; 
+        }
+
+        /* === 6. 卡片样式 === */
+        .card {
+            position: absolute;
+            width: 85%; max-width: 500px;
+            background-color: var(--card-bg);
+            border: 3px solid transparent; border-radius: 15px; 
+            padding: 25px; box-sizing: border-box;
+            cursor: pointer;
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, border-color 0.5s, background-color 0.5s, box-shadow 0.5s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform-style: preserve-3d;
+        }
+        .card.style-blue { border-color: var(--card-border-blue); } .card.style-blue h2 { color: var(--card-border-blue); }
+        .card.style-pink { border-color: var(--card-border-pink); } .card.style-pink h2 { color: var(--card-border-pink); }
+        .card.style-yellow { border-color: var(--card-border-yellow); } .card.style-yellow h2 { color: var(--card-border-yellow); }
+
+        .card-content { position: relative; z-index: 2; overflow: hidden; display: flex; flex-direction: column; height: 100%; }
+        .card h2 { margin: 0 0 15px 0; font-size: 1.6rem; font-weight: bold; }
+        .meta-info { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .preview-text { color: var(--text-primary); font-size: 1rem; line-height: 1.6; opacity: 0.8; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; transition: opacity 0.5s; }
+        body.light-mode .card { box-shadow: 0 15px 40px rgba(0,0,0,0.10); }
+
+        /* === 7. 页脚样式 (新增) === */
+        .app-footer {
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            height: 40px; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; color: var(--text-secondary);
+            font-family: monospace; letter-spacing: 1px;
+            z-index: 2002;
+            pointer-events: none; /* 让鼠标事件穿透页脚，不影响底部卡片滑动 */
+        }
+
+        /* === 占位符 === */
+        .header-placeholder { position: absolute; top: 0; width: 100%; height: 80px; pointer-events: none; }
+
+        /* =========================================
+           === CSS 媒体查询 (样式适配) ===
+           ========================================= */
+        
+        @media (min-width: 600px) and (max-width: 1024px) {
+            .top-nav-buttons { right: 110px; gap: 25px; } 
+            .card h2 { font-size: 1.4rem; }
+        }
+
+        @media (max-width: 600px) {
+            .theme-switch { right: 10px; } 
+
+            .top-nav-buttons { 
+                top: 20px; 
+                right: 85px; 
+                gap: 15px; 
+            }
+            .nav-btn { 
+                padding: 6px 12px; font-size: 0.75rem; 
+                box-shadow: 2px 2px 0px rgba(255, 255, 255, 0.2); 
+            }
+            
+            .card { padding: 20px; }
+            .card h2 { font-size: 1.3rem; margin-bottom: 10px; }
+            .meta-info { margin-bottom: 15px; font-size: 0.75rem; }
+            .preview-text { font-size: 0.9rem; line-height: 1.5; }
+
+            /* 移动端稍微抬高页脚底部间距，适配全面屏手势条 */
+            .app-footer { padding-bottom: 10px; height: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-buttons">
+       <a href="#" class="nav-btn btn-red">所有文章</a>
+       <a href="about.html" class="nav-btn btn-green">关于我</a>
+    </div> 
+
+    <div class="theme-switch" id="themeSwitch">
+        <svg viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="30" y1="0" x2="30" y2="40" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+            <circle class="bulb" cx="30" cy="70" r="7" fill="#FFD700" stroke="#666" stroke-width="1"/>
+            <path d="M30 40 L50 70 L10 70 Z" fill="#ddd" stroke="#666" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+    </div>
+
+    <div class="header-placeholder"></div>
+    <div class="card-stage" id="stage"></div>
+    
+    <footer class="app-footer">
+        © 2026 Wangyi. All Rights Reserved.
+    </footer>
+
+    <script>
+        // === 数据源 ===
+        const articles = [
+           
+            { title: "关于搭建这个博客", date: "2025-12-31", category: "Code", preview: "我一直想做一个完全属于自己的数字花园。不像 Hugo 或 Hexo 那样依赖模板，而是每一个像素都由我自己决定...", color: "blue", url: "article.html" },
+            { title: "2025 年度书单", date: "2025-12-28", category: "Reading", preview: "今年读得最震撼的一本书是黑塞的《玻璃球游戏》。那种智性的愉悦感和精神的超越感...", color: "pink", url: "article-2.html" },
+            { title: "Watch Collection", date: "2025-11-15", category: "Lifestyle", preview: "无可奈何花落去，似曾相识燕归来。小园香径独徘徊。一曲新词酒一杯，去年天气旧亭台...", color: "yellow", url: "#" },
+            { title: "Hackintosh折腾记", date: "2025-10-02", category: "Tech", preview: "多情自古伤离别，更那堪，冷落清秋节！今宵酒醒何处？杨柳岸，晓风残月...", color: "blue", url: "#" },
+            { title: "论“搭子”文化", date: "2025-09-20", category: "Sociology", preview: "纤云弄巧，飞星传恨，银汉迢迢暗度。金风玉露一相逢，便胜却人间无数...", color: "pink", url: "#" },
+            { title: "League of Legends Lore", date: "2025-08-10", category: "Game", preview: "昨夜雨疏风骤，浓睡不消残酒。试问卷帘人，却道海棠依旧。知否，知否？应是绿肥红瘦...", color: "yellow", url: "#" },
+            { title: "我的手绘工作流", date: "2025-07-05", category: "Art", preview: "自在飞花轻似梦，无边丝雨细如愁。宝帘闲挂小银钩。书被催成墨未浓，夜寒惊被薄...", color: "blue", url: "#" },
+            { title: "京都以此", date: "2025-06-12", category: "Travel", preview: "庭院深深深几许，杨柳堆烟，帘幕无重数。玉勒雕鞍游冶处，楼高不见章台路...", color: "pink", url: "#" },
+            { title: "再多一篇测试文章", date: "2025-05-12", category: "Test", preview: "我住长江头，君住长江尾。日日思君不见君，共饮长江水。此水几时休，此恨何时已...", color: "yellow", url: "#" },
+        ];
+
+        // === 逻辑控制 ===
+        const stage = document.getElementById('stage');
+        let cardElements = [];
+        let activeIndex = 0;
+
+        function init() {
+            if (localStorage.getItem('theme') === 'light') {
+                document.body.classList.add('light-mode');
+            }
+            articles.forEach((art, index) => {
+                const card = document.createElement('div');
+                card.className = `card style-${art.color}`;
+                card.innerHTML = `
+                    <div class="card-content">
+                        <h2>${art.title}</h2>
+                        <div class="meta-info"><span>${art.date}</span><span>#${art.category}</span></div>
+                        <div class="preview-text">${art.preview}</div>
+                    </div>
+                `;
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (activeIndex !== index) {
+                        activeIndex = index;
+                        updateCards();
+                    } else {
+                        if (art.url && art.url !== "#") {
+                            window.location.href = art.url;
+                        } else {
+                            console.log("No link: " + art.title);
+                        }
+                    }
+                });
+                stage.appendChild(card);
+                cardElements.push(card);
+            });
+            updateCards();
+        }
+
+        // === 布局逻辑 (含移动端优化) ===
+        function getLayoutConfig() {
+            const w = window.innerWidth;
+            if (w < 600) {
+                return { yGap: 130, stackGap: 25, cardHeight: 260 };
+            } else if (w >= 600 && w < 1024) {
+                return { yGap: 140, stackGap: 30, cardHeight: 300 };
+            } else {
+                return { yGap: 150, stackGap: 35, cardHeight: 320 };
+            }
+        }
+
+        function updateCards() {
+            const CONFIG = getLayoutConfig();
+            cardElements.forEach((el, index) => {
+                const offset = index - activeIndex;
+                const absOffset = Math.abs(offset);
+                const previewEl = el.querySelector('.preview-text');
+                
+                let translateY = 0, scale = 1, zIndex = 0, rotateX = 0;
+                let opacity = index === activeIndex ? 1 : Math.max(0, 1 - (absOffset * 0.45));
+
+                el.style.opacity = opacity;
+                el.style.pointerEvents = opacity <= 0.1 ? 'none' : 'auto';
+
+                if (index === activeIndex) {
+                    // 当前激活卡片
+                    scale = 1.05; zIndex = 100; rotateX = 0;
+                    previewEl.style.webkitLineClamp = '8'; previewEl.style.opacity = '1';
+                } else {
+                    let dist = CONFIG.yGap + (absOffset - 1) * CONFIG.stackGap;
+                    translateY = offset < 0 ? -dist : dist;
+                    rotateX = offset < 0 ? 10 : -10;
+                    scale = 0.95 - (absOffset * 0.05); 
+                    zIndex = 100 - absOffset;
+                    previewEl.style.webkitLineClamp = absOffset === 1 ? '2' : '1'; 
+                    previewEl.style.opacity = absOffset === 1 ? '0.6' : '0.3';
+                }
+                
+                el.style.transform = `translateY(${translateY}px) scale(${scale}) rotateX(${rotateX}deg)`;
+                el.style.zIndex = zIndex; 
+                el.style.height = CONFIG.cardHeight + 'px';
+            });
+        }
+
+        window.addEventListener('resize', () => { updateCards(); });
+
+        let isScrolling = false;
+        window.addEventListener('wheel', (e) => {
+            if (isScrolling) return;
+            isScrolling = true;
+            if (e.deltaY > 0 && activeIndex < articles.length - 1) activeIndex++;
+            else if (e.deltaY < 0 && activeIndex > 0) activeIndex--;
+            updateCards();
+            setTimeout(() => { isScrolling = false; }, 200);
+        });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' && activeIndex > 0) activeIndex--;
+            else if (e.key === 'ArrowDown' && activeIndex < articles.length - 1) activeIndex++;
+            updateCards();
+        });
+        let touchStartY = 0;
+        window.addEventListener('touchstart', (e) => { touchStartY = e.changedTouches[0].screenY; });
+        window.addEventListener('touchend', (e) => {
+            let touchEndY = e.changedTouches[0].screenY;
+            if (touchEndY - touchStartY < -50 && activeIndex < articles.length - 1) activeIndex++;
+            else if (touchEndY - touchStartY > 50 && activeIndex > 0) activeIndex--;
+            updateCards();
+        });
+
+        // === 主题切换 + 闪光特效 ===
+        const themeSwitch = document.getElementById('themeSwitch');
+        const bulb = document.querySelector('.bulb'); 
+
+        themeSwitch.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+
+            if (isLight) {
+                bulb.classList.remove('flashing');
+                void bulb.offsetWidth; 
+                bulb.classList.add('flashing');
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

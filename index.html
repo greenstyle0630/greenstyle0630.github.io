@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Welcome - My Digital Space</title>
+    <style>
+        /* =========================================
+           1. 全局基础样式
+           ========================================= */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; 
+            background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            -webkit-user-select: none; user-select: none;
+            transition: background-color 0.5s ease;
+        }
+
+        :root {
+            --bg-color: #000;
+            --card-border-blue: #4dabf7; --card-border-pink: #ff8787; --card-border-yellow: #ffd43b; 
+            --text-primary: #eee;
+        }
+
+        body.light-mode {
+            --bg-color: #f9f9f9;
+            --card-border-blue: #1c7ed6; --card-border-pink: #e03131; --card-border-yellow: #f59f00;
+            --text-primary: #333;
+            background-color: var(--bg-color);
+        }
+
+        body.light-mode .typewriter-container { color: #333; }
+        body.light-mode .cursor { background-color: #333; }
+        
+        /* 删除旧的 light-mode 按钮样式覆盖，让新样式统一生效 */
+        body.light-mode .card { 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+            -webkit-box-reflect: below 0px linear-gradient(transparent 60%, rgba(0,0,0,0.1)); 
+        }
+
+        /* =========================================
+           2. 吊灯组件 (1:1 移植自文章页)
+           ========================================= */
+        .theme-switch {
+            position: absolute; 
+            top: -20px;       
+            right: 40px;      
+            width: 60px; height: 120px; 
+            cursor: pointer; z-index: 2000; 
+            transform-origin: top center;
+            transition: transform 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .theme-switch:hover { transform: rotate(5deg); }
+        
+        .bulb { fill: #FFD700; transition: fill 0.3s, filter 0.3s; }
+
+        @keyframes bulbFlash {
+            0% { filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)); fill: #FFD700; }
+            50% { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 1)); fill: #FFF; } 
+            100% { filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)); fill: #FFD700; }
+        }
+        .bulb.flashing {
+            animation: bulbFlash 0.6s ease-out forwards;
+        }
+
+        /* =========================================
+           3. 3D 舞台与卡片
+           ========================================= */
+        .stage {
+            position: relative; width: 100%; height: 380px;
+            perspective: 900px; transform-style: preserve-3d;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 20px; touch-action: none; cursor: pointer;
+        }
+
+        .card {
+            position: absolute; 
+            width: 260px; height: 260px;
+            background-color: #111; background-size: cover; background-position: center;
+            border: 3px solid transparent; border-radius: 15px; box-sizing: border-box;
+            -webkit-box-reflect: below 5px linear-gradient(transparent 50%, rgba(255,255,255,0.2));
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.4s, filter 0.4s, border-color 0.5s;
+            cursor: pointer; pointer-events: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .card.style-blue { border-color: var(--card-border-blue); }
+        .card.style-pink { border-color: var(--card-border-pink); }
+        .card.style-yellow { border-color: var(--card-border-yellow); }
+
+        /* =========================================
+           4. 文字与按钮 (核心修改区域)
+           ========================================= */
+        .typewriter-container {
+            text-align: center; z-index: 200; color: #ccc;
+            height: 60px; display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            pointer-events: none; transition: color 0.5s ease;
+        }
+        .typewriter-text { font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; line-height: 1.5; }
+        .cursor {
+            display: inline-block; width: 8px; height: 1.2rem;
+            background-color: #fff; margin-left: 5px;
+            animation: blink 1s infinite; vertical-align: text-bottom;
+            transition: background-color 0.5s ease;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* --- 游戏机风格按钮样式修改开始 --- */
+        .enter-btn {
+            margin-top: 50px; padding: 12px 38px;
+            
+            /* 形状保持不变 */
+            border-radius: 30px; 
+            
+            /* 颜色配置：娇黄色背景 + 绿色细线边框 */
+            background-color: #FCE38A; /* 娇黄色 */
+            border: 2px solid #32CD32; /* 游戏机绿 */
+            color: #333; /* 深色文字以对比黄色背景 */
+            
+            /* 字体样式调整，更像游戏按钮 */
+            text-decoration: none; font-size: 1rem; font-weight: bold;
+            letter-spacing: 2px;
+            
+            opacity: 0; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); pointer-events: none;
+            /* 添加一点内部阴影增加立体感 */
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1); 
+        }
+        
+        .enter-btn:hover {
+            background-color: #FFFACD; /* 悬停变亮 */
+            border-color: #4CFF4C;     /* 边框变亮 */
+            /* 悬停时添加绿色光晕和按压效果 */
+            box-shadow: 0 0 20px rgba(50, 205, 50, 0.5), inset 0 -2px 0 rgba(0,0,0,0.1); 
+            transform: translateY(2px); /* 按下效果 */
+        }
+        
+        .enter-btn:active {
+            transform: translateY(4px); /* 点击时更深的按下效果 */
+            box-shadow: inset 0 2px 0 rgba(0,0,0,0.1);
+        }
+        /* --- 游戏机风格按钮样式修改结束 --- */
+
+        .enter-btn.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* =========================================
+           5. 响应式适配
+           ========================================= */
+        @media (min-width: 600px) and (max-width: 1024px) {
+            .card { width: 220px; height: 220px; }
+            .stage { height: 320px; }
+            .typewriter-text { font-size: 1.1rem; }
+        }
+
+        @media (max-width: 600px) {
+            .card { width: 160px; height: 160px; border-radius: 10px; }
+            .stage { height: 260px; margin-bottom: 10px; }
+            .theme-switch { right: 10px; } 
+            .typewriter-text { font-size: 0.95rem; line-height: 1.4; padding: 0 20px; }
+            .cursor { height: 1rem; width: 6px; }
+            .enter-btn { margin-top: 30px; padding: 10px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-switch" id="themeSwitch">
+        <svg viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="30" y1="0" x2="30" y2="40" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+            <circle class="bulb" cx="30" cy="70" r="7" fill="#FFD700" stroke="#666" stroke-width="1"/>
+            <path d="M30 40 L50 70 L10 70 Z" fill="#ddd" stroke="#666" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+    </div>
+
+    <div class="stage" id="stage"></div>
+
+    <div class="typewriter-container">
+        <div>
+            <span class="typewriter-text" id="typewriter"></span><span class="cursor"></span>
+        </div>
+        <a href="home.html" class="enter-btn" id="enterBtn">点击进入</a>
+    </div>
+
+    <script>
+        // === 1. 主题切换 + 闪光特效逻辑 ===
+        const themeSwitch = document.getElementById('themeSwitch');
+        const bulb = document.querySelector('.bulb'); 
+        const body = document.body;
+
+        if (localStorage.getItem('theme') === 'light') body.classList.add('light-mode');
+        
+        themeSwitch.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+
+            if (isLight) {
+                bulb.classList.remove('flashing');
+                void bulb.offsetWidth; 
+                bulb.classList.add('flashing');
+            }
+        });
+
+        // === 2. 封面数据 ===
+        const albumCovers = [
+            "https://picsum.photos/400/400?random=1",
+            "https://picsum.photos/400/400?random=2",
+            "https://picsum.photos/400/400?random=3",
+            "https://picsum.photos/400/400?random=4",
+            "https://picsum.photos/400/400?random=5",
+            "https://picsum.photos/400/400?random=6",
+            "https://picsum.photos/400/400?random=7",
+        ];
+        const textStr = "Wangyi's blog. / 郴江幸自绕郴山，为谁流下潇湘去";
+
+        // === 3. Cover Flow 核心逻辑 ===
+        const stage = document.getElementById('stage');
+        let cards = [];
+        let activeIndex = Math.floor(albumCovers.length / 2);
+        const colors = ['blue', 'pink', 'yellow'];
+
+        function initCards() {
+            albumCovers.forEach((url, index) => {
+                const card = document.createElement('div');
+                const colorClass = `style-${colors[index % 3]}`;
+                card.className = `card ${colorClass}`;
+                card.style.backgroundImage = `url('${url}')`;
+                
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    if (activeIndex !== index) {
+                        activeIndex = index;
+                        updateCards();
+                    }
+                });
+                stage.appendChild(card);
+                cards.push(card);
+            });
+            updateCards();
+        }
+
+        function getLayoutConfig() {
+            const w = window.innerWidth;
+            if (w < 600) {
+                return { mainGap: 80, stackGap: 25, zOffset: -150, rotateAngle: 75 };
+            } else if (w >= 600 && w < 1024) {
+                return { mainGap: 130, stackGap: 35, zOffset: -180, rotateAngle: 70 };
+            } else {
+                return { mainGap: 180, stackGap: 40, zOffset: -200, rotateAngle: 75 };
+            }
+        }
+
+        function updateCards() {
+            const CONFIG = getLayoutConfig();
+            cards.forEach((card, index) => {
+                const offset = index - activeIndex;
+                const absOffset = Math.abs(offset);
+                let transform = '', zIndex = 0, filter = '';
+
+                if (index === activeIndex) {
+                    transform = `translateX(0) translateZ(50px) rotateY(0deg)`;
+                    zIndex = 1000;
+                    filter = 'brightness(1.1)'; 
+                } else {
+                    const direction = offset > 0 ? 1 : -1;
+                    const rotate = offset < 0 ? CONFIG.rotateAngle : -CONFIG.rotateAngle;
+                    let translateX = direction === -1 
+                        ? -(CONFIG.mainGap + (absOffset - 1) * CONFIG.stackGap)
+                        : CONFIG.mainGap + (absOffset - 1) * CONFIG.stackGap;
+
+                    transform = `translateX(${translateX}px) translateZ(${CONFIG.zOffset}px) rotateY(${rotate}deg)`;
+                    zIndex = 100 - absOffset;
+                    filter = `brightness(0.3)`;
+                }
+
+                card.style.transform = transform;
+                card.style.zIndex = zIndex;
+                card.style.filter = filter;
+            });
+        }
+
+        window.addEventListener('resize', () => { updateCards(); });
+
+        stage.addEventListener('click', (e) => {
+            const stageWidth = stage.offsetWidth;
+            if (e.clientX > stageWidth / 2 && activeIndex < cards.length - 1) activeIndex++;
+            else if (e.clientX <= stageWidth / 2 && activeIndex > 0) activeIndex--;
+            updateCards();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && activeIndex > 0) { activeIndex--; updateCards(); }
+            else if (e.key === 'ArrowRight' && activeIndex < cards.length - 1) { activeIndex++; updateCards(); }
+        });
+
+        let isScrolling = false;
+        stage.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (isScrolling) return;
+            isScrolling = true;
+            if(e.deltaY > 0 && activeIndex < cards.length - 1) activeIndex++;
+            else if (e.deltaY < 0 && activeIndex > 0) activeIndex--;
+            updateCards();
+            setTimeout(() => { isScrolling = false; }, 200);
+        }, { passive: false });
+
+        let touchStartX = 0;
+        stage.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX, { passive: true });
+        stage.addEventListener('touchend', (e) => {
+            let touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX - touchStartX < -50 && activeIndex < cards.length - 1) activeIndex++;
+            else if (touchEndX - touchStartX > 0 && activeIndex > 0) activeIndex--;
+            updateCards();
+        }, { passive: true });
+
+        const textEl = document.getElementById('typewriter');
+        const enterBtn = document.getElementById('enterBtn');
+        let charIdx = 0;
+        function typeLoop() {
+            if (charIdx < textStr.length) {
+                const char = textStr.charAt(charIdx);
+                textEl.innerHTML += (char === '/') ? '<br/>' : char;
+                charIdx++;
+                setTimeout(typeLoop, 100 + Math.random() * 50);
+            } else {
+                setTimeout(() => enterBtn.classList.add('show'), 600);
+            }
+        }
+
+        initCards();
+        setTimeout(typeLoop, 800);
+    </script>
+</body>
+</html>

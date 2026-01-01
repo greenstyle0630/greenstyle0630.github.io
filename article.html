@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Article - Markdown Support</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* === 1. 全局设置 === */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; 
+            display: flex; flex-direction: column;
+            transition: background-color 0.5s ease;
+        }
+
+        /* === 2. 配色变量 === */
+        :root {
+            --bg-color: #000;
+            --card-bg: #1a1a1a;
+            --card-border-yellow: #ffd43b; 
+            --text-primary: #eee;
+            --text-secondary: #888;
+            --marker-h1: #ffd43b; --marker-h2: #ff8787; --marker-h3: #4dabf7;
+            --btn-red: #ff6b6b; --btn-green: #51cf66; --btn-border: #eee;
+            --code-bg: #333; /* 新增代码块背景 */
+        }
+
+        body.light-mode {
+            --bg-color: #f9f9f9;
+            --card-bg: #fff;
+            --card-border-yellow: #f59f00;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --marker-h1: #f59f00; --marker-h2: #e03131; --marker-h3: #1c7ed6;
+            --btn-red: #e03131; --btn-green: #2f9e44; --btn-border: #333;
+            --code-bg: #f0f0f0;
+            background-color: var(--bg-color);
+        }
+
+        body, h1, h2, h3, p, span, div, a {
+            color: var(--text-primary); 
+            transition: color 0.5s ease;
+        }
+
+        /* === 3. 吊灯 === */
+        .theme-switch {
+            position: absolute; top: -20px; right: 40px; 
+            width: 60px; height: 120px;
+            cursor: pointer; z-index: 3000; 
+            transform-origin: top center; transition: transform 0.3s ease; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .theme-switch:hover { transform: rotate(5deg); }
+        .bulb { fill: #FFD700; transition: fill 0.3s, filter 0.3s; }
+        @keyframes bulbFlash {
+            0% { filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)); fill: #FFD700; }
+            50% { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 1)); fill: #FFF; } 
+            100% { filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)); fill: #FFD700; }
+        }
+        .bulb.flashing { animation: bulbFlash 0.6s ease-out forwards; }
+
+        /* === 4. 布局容器 === */
+        .app-main {
+            flex: 1; width: 100%; display: flex; justify-content: center; align-items: center;
+            position: relative; overflow: hidden; padding: 120px 0 20px 0; box-sizing: border-box;
+        }
+        .layout-container {
+            display: flex; width: 100%; max-width: 1100px; 
+            height: 100%; align-items: center; justify-content: center;
+        }
+
+        /* === 5. 目录 === */
+        .toc-sidebar {
+            width: 160px; height: 100%; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 20px;
+            margin-right: 40px; padding-top: 10px; scrollbar-width: none;
+            transform: translateY(-100px); opacity: 0;
+            animation: dropDown 1.0s cubic-bezier(0.19, 1, 0.22, 1) forwards 0.3s;
+        }
+        .toc-sidebar::-webkit-scrollbar { display: none; }
+        @keyframes dropDown { to { transform: translateY(0); opacity: 1; } }
+
+        .toc-item {
+            font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;
+            transition: all 0.3s ease; position: relative; line-height: 1.4;
+            display: flex; flex-direction: column; align-items: flex-start;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+        }
+        .toc-item::after {
+            content: ''; display: block; width: 15px; height: 2px;
+            margin-top: 5px; border-radius: 2px; background-color: #444;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .toc-item.active { color: var(--text-primary); font-weight: bold; }
+        .toc-item.toc-h1::after { background-color: var(--marker-h1); }
+        .toc-item.toc-h2 { padding-left: 10px; opacity: 0.9; }
+        .toc-item.toc-h2::after { background-color: var(--marker-h2); }
+        .toc-item.toc-h3 { padding-left: 20px; opacity: 0.8; }
+        .toc-item.toc-h3::after { background-color: var(--marker-h3); }
+        .toc-item:hover::after, .toc-item.active::after { width: 40px; }
+
+        /* === 6. 文章容器 === */
+        .article-frame {
+            flex: 1; max-width: 800px; height: 100%; 
+            background-color: var(--card-bg);
+            border: 2px solid var(--card-border-yellow);
+            border-radius: 12px; box-sizing: border-box; position: relative; box-shadow: none;
+            transform: translateX(100vw); opacity: 0;
+            animation: flyInRight 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards 0.5s;
+        }
+        @keyframes flyInRight { to { transform: translateX(0); opacity: 1; } }
+        .article-scroller {
+            width: 100%; height: 100%; overflow-y: auto; padding: 60px; box-sizing: border-box;
+            scrollbar-width: none; scroll-behavior: smooth;
+        }
+        .article-scroller::-webkit-scrollbar { display: none; }
+
+        /* === 7. 导航按钮 === */
+        .top-nav-buttons {
+            position: absolute; top: 20px; right: 150px; 
+            display: flex; gap: 40px; z-index: 2001; align-items: center;
+        }
+        .nav-btn {
+            text-decoration: none; font-family: 'Courier New', Courier, monospace; 
+            font-weight: bold; font-size: 0.85rem; padding: 8px 24px; 
+            border: 2px solid; background-color: transparent; border-radius: 8px; 
+            cursor: pointer; transition: all 0.1s; letter-spacing: 1px; 
+        }
+        .nav-btn.btn-red { color: var(--btn-red); border-color: var(--btn-red); box-shadow: 4px 4px 0px rgba(255, 107, 107, 0.3); }
+        .nav-btn.btn-green { color: var(--btn-green); border-color: var(--btn-green); box-shadow: 4px 4px 0px rgba(81, 207, 102, 0.3); }
+        .nav-btn:hover { transform: translateY(-2px); }
+        .nav-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        /* === Markdown 内容排版样式 === */
+        /* 标题 */
+        h1 { font-size: 2.2rem; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--card-border-yellow); line-height: 1.3; margin-top: 0; }
+        .article-meta { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 60px; font-family: monospace; }
+        h2 { font-size: 1.6rem; margin: 60px 0 30px 0; color: var(--marker-h2); }
+        h3 { font-size: 1.3rem; margin: 40px 0 20px 0; color: var(--marker-h3); }
+        p { font-size: 1.05rem; line-height: 2.2; margin-bottom: 30px; opacity: 0.9; text-align: justify; }
+        
+        /* 列表 */
+        ul, ol { margin-bottom: 30px; padding-left: 20px; line-height: 2; opacity: 0.9; }
+        li { margin-bottom: 10px; }
+        
+        /* 代码块 */
+        pre { background-color: var(--code-bg); padding: 15px; border-radius: 8px; overflow-x: auto; margin-bottom: 30px; }
+        code { font-family: 'Courier New', Courier, monospace; color: var(--marker-h3); }
+        
+        /* 图片 */
+        img { max-width: 100%; border-radius: 8px; margin: 20px 0; }
+        
+        /* 引用 */
+        blockquote { border-left: 4px solid var(--card-border-yellow); margin: 0 0 30px 0; padding-left: 20px; color: var(--text-secondary); font-style: italic; }
+
+        /* 移动端适配 */
+        .app-footer {
+            height: 40px; width: 100%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; color: var(--text-secondary); font-family: monospace; letter-spacing: 1px; z-index: 100;
+        }
+
+        @media (max-width: 900px) {
+            .app-main { flex-direction: column; padding: 0; height: 100%; }
+            .layout-container {
+                flex-direction: column; width: 100%; flex: 1; min-height: 0;
+                padding: 0 10px; padding-top: 80px; padding-bottom: 10px; box-sizing: border-box;
+            }
+            .theme-switch { right: 10px; } 
+            .top-nav-buttons {
+                top: 20px; right: 85px; width: auto; margin: 0; padding: 0; gap: 15px; justify-content: flex-end; 
+            }
+            .nav-btn { padding: 6px 15px; font-size: 0.75rem; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+            .toc-sidebar {
+                width: 100%; height: 40px; min-height: 40px; flex-shrink: 0; flex-direction: row; 
+                margin: 0 0 25px 0; padding: 0; overflow-x: auto; overflow-y: hidden; white-space: nowrap;
+                opacity: 1; transform: none; animation: none; border-bottom: 1px solid rgba(255,255,255,0.1); 
+            }
+            .toc-item { 
+                margin-right: 20px; padding: 0 5px; line-height: normal; height: 100%; 
+                display: flex; flex-direction: column; justify-content: center; align-items: center;
+                opacity: 0.6; border-bottom: none;
+            }
+            .toc-item.active { opacity: 1; border-bottom: none; }
+            .toc-item.toc-h1, .toc-item.toc-h2, .toc-item.toc-h3 { padding-left: 0; }
+            .toc-item::after { display: block; width: 0px; height: 3px; margin-top: 4px; background-color: #444; }
+            .toc-item.active::after { width: 20px; }
+            .toc-item.toc-h1.active::after { background-color: var(--marker-h1); }
+            .toc-item.toc-h2.active::after { background-color: var(--marker-h2); }
+            .toc-item.toc-h3.active::after { background-color: var(--marker-h3); }
+            .article-frame {
+                width: 100%; flex: 1; height: auto; min-height: 0; border-radius: 12px;
+                border: 2px solid var(--card-border-yellow); margin-bottom: 0; transform: none; opacity: 1; animation: none; box-shadow: none;
+            }
+            .article-scroller { padding: 25px 20px; padding-bottom: 80px; -webkit-overflow-scrolling: touch; }
+            .article-title { font-size: 1.6rem; }
+            .app-footer { display: flex; height: 40px; font-size: 0.7rem; padding-bottom: 10px; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-switch" id="themeSwitch">
+        <svg viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="30" y1="0" x2="30" y2="40" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+            <circle class="bulb" cx="30" cy="70" r="7" fill="#FFD700" stroke="#666" stroke-width="1"/>
+            <path d="M30 40 L50 70 L10 70 Z" fill="#ddd" stroke="#666" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+    </div>
+
+    <div class="top-nav-buttons">
+        <a href="home.html" class="nav-btn btn-red">所有文章</a>
+        <a href="about.html" class="nav-btn btn-green">关于我</a>
+    </div>
+
+    <main class="app-main">
+        <div class="layout-container">
+            <aside class="toc-sidebar" id="tocSidebar"></aside>
+            
+            <div class="article-frame">
+                <div class="article-scroller" id="scroller">
+                    <div id="articleContent"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        © 2026 Wangyi. All Rights Reserved.
+    </footer>
+
+    <script type="text/markdown" id="md-source">
+# 关于搭建这个纯手写博客的设计复盘
+<div class="article-meta">Dec 31, 2025 · Design</div>
+
+这是一个完全脱离了主流 CMS（内容管理系统）的博客。在这里，没有 WordPress 的臃肿，没有 Hugo 的模板束缚。**每一个 HTML 标签，每一行 CSS 动画，都是我在 VS Code 里逐行敲出来的。**
+
+## 1. 视觉隐喻：从唱片到信纸
+整个网站的设计语言建立在几个核心的物理隐喻之上。首先是“唱片封面流”（Cover Flow）。这是向 2007 年代 iPod 经典界面的致敬。
+
+### 1.1 为什么是唱片？
+在那个拟物化设计的黄金时代，翻阅专辑封面本身就是一种享受。我希望访客在进入博客的一瞬间，不是面对冰冷的列表，而是可以像拨弄唱片一样去翻阅我的文章。
+
+### 1.2 为什么是信纸？
+当你点开一篇文章，背景会变暗，注意力被聚焦在中央这张长长的、带有些许纹理的卡片上。这里的文字不再是屏幕上的像素，而是打印在纸上的墨迹。
+
+## 2. 光与暗：交互的灵魂
+你一定注意到了右上角那盏一直悬挂的黄色吊灯。它不仅仅是一个 Dark Mode 开关。
+
+> 在我的设计理念中，“光”是引导视线的工具。在文章页加载时，你看到的那个从底部升起的亮光动画，隐喻着“日出”或“点灯阅读”的过程。
+
+### 2.1 光照的实现原理
+通过 CSS 的 `mask-image` 属性，我实现了一个动态的光照遮罩。这比简单的 `opacity` 渐变要有质感得多。
+
+## 3. 动态导航设计
+看一看左侧。那些随你滚动而跳动的彩色文字，是这个页面最精致的微交互之一。
+
+### 3.1 IntersectionObserver API
+技术上，这里使用了 IntersectionObserver API。它能极其高效地监听元素是否进入视口，从而触发方块的高亮状态。
+
+## 4. 为什么手写代码？
+因为审美是无法被完全自动化的。AI 可以生成一个标准的博客，但它很难凭空创造出“带有断裂感的文件夹标签”或者“漏出一半灯泡的吊灯”这样充满个性的细节。
+
+- 自由度高
+- 性能极致
+- 只有自己懂的浪漫
+
+<p style="margin-top: 100px; text-align: center; color: var(--card-border-yellow);">—— EOF ——</p>
+<div style="height: 100px;"></div>
+    </script>
+
+    <script>
+        // === 1. 解析 Markdown ===
+        const mdSource = document.getElementById('md-source').textContent;
+        const articleContent = document.getElementById('articleContent');
+        
+        // 使用 marked 渲染 HTML
+        // 去掉首尾空白，防止解析错误
+        articleContent.innerHTML = marked.parse(mdSource.trim());
+
+        // === 2. 基础交互逻辑 (主题灯泡) ===
+        const themeSwitch = document.getElementById('themeSwitch');
+        const body = document.body;
+        const bulb = document.querySelector('.bulb');
+
+        if (localStorage.getItem('theme') === 'light') body.classList.add('light-mode');
+        
+        themeSwitch.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            const isLight = body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+
+            if (isLight) {
+                bulb.classList.remove('flashing');
+                void bulb.offsetWidth; 
+                bulb.classList.add('flashing');
+            }
+        });
+
+        // === 3. 目录自动生成逻辑 (TOC) ===
+        // 注意：这段必须在 Markdown 渲染成 HTML 之后执行
+        const tocSidebar = document.getElementById('tocSidebar');
+        const scroller = document.getElementById('scroller');
+        const headers = articleContent.querySelectorAll('h1, h2, h3');
+        const tocItems = [];
+
+        headers.forEach((header, index) => {
+            if (!header.id) header.id = `header-${index}`;
+            const item = document.createElement('div');
+            item.innerText = header.innerText;
+            // 自动根据 h1/h2/h3 生成对应的 class
+            item.className = `toc-item toc-${header.tagName.toLowerCase()}`;
+            item.addEventListener('click', () => {
+                const topPos = header.offsetTop;
+                scroller.scrollTo({ top: topPos - 20, behavior: 'smooth' });
+            });
+            tocSidebar.appendChild(item);
+            tocItems.push(item);
+        });
+
+        // === 4. 滚动监听 ===
+        const observerOptions = { root: scroller, rootMargin: '0px 0px -70% 0px', threshold: 0 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const index = Array.from(headers).indexOf(entry.target);
+                    tocItems.forEach(item => item.classList.remove('active'));
+                    if (tocItems[index]) {
+                        tocItems[index].classList.add('active');
+                        // 移动端自动滚动目录条
+                        if (window.innerWidth < 900) {
+                            const offsetLeft = tocItems[index].offsetLeft;
+                            tocSidebar.scrollTo({ left: offsetLeft - 20, behavior: 'smooth' });
+                        }
+                    }
+                }
+            });
+        }, observerOptions);
+        headers.forEach(header => observer.observe(header));
+    </script>
+</body>
+</html>
