@@ -136,15 +136,20 @@
         @media (max-width: 600px) {
             .theme-switch { right: 10px; } 
 
+            /* === 修正部分开始：与 About 页面像素级对齐 === */
             .top-nav-buttons { 
                 top: 20px; 
-                right: 85px; 
-                gap: 15px; 
+                right: 85px;  /* 修正：之前可能不是85 */
+                width: auto; margin: 0; padding: 0; /* 修正：增加保护样式 */
+                gap: 15px;    
+                justify-content: flex-end; 
             }
             .nav-btn { 
-                padding: 6px 12px; font-size: 0.75rem; 
-                box-shadow: 2px 2px 0px rgba(255, 255, 255, 0.2); 
+                padding: 6px 15px; /* 修正：从12px改为15px */
+                font-size: 0.75rem; 
+                box-shadow: 2px 2px 0px rgba(0,0,0,0.2); /* 修正：改为黑色阴影 */
             }
+            /* === 修正部分结束 === */
             
             .card { padding: 20px; }
             .card h2 { font-size: 1.3rem; margin-bottom: 10px; }
