@@ -58,7 +58,7 @@
             animation: bulbFlash 0.6s ease-out forwards;
         }
 
-        /* === 4. 顶部导航按钮 === */
+        /* === 4. 顶部导航按钮 (桌面端默认) === */
         .top-nav-buttons {
             position: absolute; 
             top: 20px; 
@@ -108,7 +108,7 @@
         .preview-text { color: var(--text-primary); font-size: 1rem; line-height: 1.6; opacity: 0.8; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; transition: opacity 0.5s; }
         body.light-mode .card { box-shadow: 0 15px 40px rgba(0,0,0,0.10); }
 
-        /* === 7. 页脚样式 (新增) === */
+        /* === 7. 页脚样式 === */
         .app-footer {
             position: absolute; 
             bottom: 0; 
@@ -118,45 +118,46 @@
             font-size: 0.75rem; color: var(--text-secondary);
             font-family: monospace; letter-spacing: 1px;
             z-index: 2002;
-            pointer-events: none; /* 让鼠标事件穿透页脚，不影响底部卡片滑动 */
+            pointer-events: none; 
         }
 
         /* === 占位符 === */
         .header-placeholder { position: absolute; top: 0; width: 100%; height: 80px; pointer-events: none; }
 
         /* =========================================
-           === CSS 媒体查询 (样式适配) ===
+           === CSS 媒体查询 (适配) ===
            ========================================= */
         
+        /* 1. 平板 (600px - 1024px)：只调整文字大小，【不再调整按钮位置】 */
+        /* 这样 iPad 横屏 (>900px) 就会自动保持桌面端样式 (right: 150px)，与 About 页一致 */
         @media (min-width: 600px) and (max-width: 1024px) {
-            .top-nav-buttons { right: 110px; gap: 25px; } 
             .card h2 { font-size: 1.4rem; }
         }
 
-        @media (max-width: 600px) {
-            .theme-switch { right: 10px; } 
-
-            /* === 修正部分开始：与 About 页面像素级对齐 === */
+        /* 2. 新增规则：900px 以下统一调整按钮 (完全同步 About 页逻辑) */
+        /* 这样 iPad 竖屏 (<900px) 就会自动切换到移动端样式 (right: 85px)，与 About 页一致 */
+        @media (max-width: 900px) {
             .top-nav-buttons { 
                 top: 20px; 
-                right: 85px;  /* 修正：之前可能不是85 */
-                width: auto; margin: 0; padding: 0; /* 修正：增加保护样式 */
-                gap: 15px;    
+                right: 85px; 
+                width: auto; margin: 0; padding: 0;
+                gap: 15px; 
                 justify-content: flex-end; 
             }
             .nav-btn { 
-                padding: 6px 15px; /* 修正：从12px改为15px */
+                padding: 6px 15px; 
                 font-size: 0.75rem; 
-                box-shadow: 2px 2px 0px rgba(0,0,0,0.2); /* 修正：改为黑色阴影 */
+                box-shadow: 2px 2px 0px rgba(0,0,0,0.2); 
             }
-            /* === 修正部分结束 === */
-            
+        }
+
+        /* 3. 手机 (600px 以下)：继续调整其他布局，但按钮样式上面已经处理了 */
+        @media (max-width: 600px) {
+            .theme-switch { right: 10px; } 
             .card { padding: 20px; }
             .card h2 { font-size: 1.3rem; margin-bottom: 10px; }
             .meta-info { margin-bottom: 15px; font-size: 0.75rem; }
             .preview-text { font-size: 0.9rem; line-height: 1.5; }
-
-            /* 移动端稍微抬高页脚底部间距，适配全面屏手势条 */
             .app-footer { padding-bottom: 10px; height: 50px; }
         }
     </style>
@@ -186,7 +187,6 @@
     <script>
         // === 数据源 ===
         const articles = [
-           
             { title: "关于搭建这个博客", date: "2025-12-31", category: "Code", preview: "我一直想做一个完全属于自己的数字花园。不像 Hugo 或 Hexo 那样依赖模板，而是每一个像素都由我自己决定...", color: "blue", url: "article.html" },
             { title: "2025 年度书单", date: "2025-12-28", category: "Reading", preview: "今年读得最震撼的一本书是黑塞的《玻璃球游戏》。那种智性的愉悦感和精神的超越感...", color: "pink", url: "article-2.html" },
             { title: "Watch Collection", date: "2025-11-15", category: "Lifestyle", preview: "无可奈何花落去，似曾相识燕归来。小园香径独徘徊。一曲新词酒一杯，去年天气旧亭台...", color: "yellow", url: "#" },
@@ -325,4 +325,4 @@
         init();
     </script>
 </body>
-</html>
+</html>·
